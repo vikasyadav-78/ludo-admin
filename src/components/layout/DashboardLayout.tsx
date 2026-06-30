@@ -23,6 +23,7 @@ interface DashboardLayoutProps {
   onRefresh: () => void;
   searchValue: string;
   onSearchChange: (val: string) => void;
+  notificationCount?: number;
   children: React.ReactNode;
 }
 
@@ -39,6 +40,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   onRefresh,
   searchValue,
   onSearchChange,
+  notificationCount = 0,
   children,
 }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -78,6 +80,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           adminEmail={adminEmail}
           searchValue={searchValue}
           onSearchChange={onSearchChange}
+          notificationCount={notificationCount}
+          onTabChange={onTabChange}
         />
 
         <main className="flex-1 overflow-y-auto px-6 pt-6 pb-24">

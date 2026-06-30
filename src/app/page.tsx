@@ -20,7 +20,8 @@ import {
   Download,
   ZoomIn,
   Camera,
-  Database
+  Database,
+  User
 } from 'lucide-react';
 
 // Design System Imports
@@ -58,7 +59,7 @@ export default function AdminPage() {
   const [socketConnected, setSocketConnected] = useState(false);
 
   // Dashboard state variables
-  const [activeTab, setActiveTab] = useState<'overview' | 'financials' | 'users' | 'battles' | 'ai_reviews' | 'screenshots' | 'transactions' | 'deposits_withdrawals' | 'referrals' | 'reports_audit' | 'settings'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'financials' | 'users' | 'battles' | 'ai_reviews' | 'screenshots' | 'transactions' | 'deposits_withdrawals' | 'referrals' | 'reports_audit' | 'settings' | 'profile'>('overview');
   
   // Data lists
   const [stats, setStats] = useState<any>(null);
@@ -108,12 +109,36 @@ export default function AdminPage() {
   const [auditSearch, setAuditSearch] = useState('');
   const [globalSearch, setGlobalSearch] = useState('');
 
-  // Auto-fill token from localStorage
+  // Profile tab states
+  const [adminUser, setAdminUser] = useState<any>(null);
+  const [profileName, setProfileName] = useState('');
+  const [profileEmail, setProfileEmail] = useState('');
+  const [profileMobile, setProfileMobile] = useState('');
+  const [profileAvatarUrl, setProfileAvatarUrl] = useState('');
+  const [profileAvatarFile, setProfileAvatarFile] = useState<File | null>(null);
+  const [oldPassword, setOldPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [updatingProfile, setUpdatingProfile] = useState(false);
+  const [updatingPassword, setUpdatingPassword] = useState(false);
+
+  // Auto-fill token and adminUser from localStorage
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const savedToken = localStorage.getItem('token');
+      const savedUser = localStorage.getItem('adminUser');
       if (savedToken) {
         setToken(savedToken);
+      }
+      if (savedUser) {
+        try {
+          const parsed = JSON.parse(savedUser);
+          setAdminUser(parsed);
+          setProfileName(parsed.name || '');
+          setProfileEmail(parsed.email || '');
+          setProfileMobile(parsed.mobile || '');
+          setProfileAvatarUrl(parsed.avatar || '');
+        } catch (e) { console.error(e); }
       }
     }
   }, []);
@@ -165,6 +190,22 @@ export default function AdminPage() {
     }
   }, [token]);
 
+  const fetchAdminProfile = async () => {
+    try {
+      const res = await customFetch('https://ludo-backend-production-72bc.up.railway.app/api/v1/users/profile', { headers: headers() });
+      if (!res) return;
+      const data = await res.json();
+      if (data.status === 'success') {
+        setAdminUser(data.data.user);
+        localStorage.setItem('adminUser', JSON.stringify(data.data.user));
+        setProfileName(data.data.user.name || '');
+        setProfileEmail(data.data.user.email || '');
+        setProfileMobile(data.data.user.mobile || '');
+        setProfileAvatarUrl(data.data.user.avatar || '');
+      }
+    } catch (e) { console.error(e); }
+  };
+
   const fetchAllData = () => {
     fetchOverviewStats();
     fetchFinancialStats();
@@ -177,6 +218,7 @@ export default function AdminPage() {
     fetchReferralData();
     fetchAuditLogs();
     fetchSettings();
+    fetchAdminProfile();
   };
 
   const headers = () => ({
@@ -186,7 +228,9 @@ export default function AdminPage() {
 
   const handleLogout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('adminUser');
     setToken(null);
+    setAdminUser(null);
     setStats(null);
     setFinancialStats(null);
   };
@@ -347,7 +391,13 @@ export default function AdminPage() {
           return;
         }
         localStorage.setItem('token', data.data.token);
+        localStorage.setItem('adminUser', JSON.stringify(data.data.user));
         setToken(data.data.token);
+        setAdminUser(data.data.user);
+        setProfileName(data.data.user.name || '');
+        setProfileEmail(data.data.user.email || '');
+        setProfileMobile(data.data.user.mobile || '');
+        setProfileAvatarUrl(data.data.user.avatar || '');
       } else {
         setError(data.message || 'Login failed');
       }
@@ -615,6 +665,124 @@ export default function AdminPage() {
     setSettings(prev => prev.map(s => s.key === key ? { ...s, value: newValue } : s));
   };
 
+  const handleUpdateProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setUpdatingProfile(true);
+    setMessage('');
+    setError('');
+    try {
+      // 1. Update basic profile (name, email)
+      const resProf = await customFetch('https://ludo-backend-production-72bc.up.railway.app/api/v1/users/profile', {
+        method: 'PUT',
+        headers: headers(),
+        body: JSON.stringify({ name: profileName, email: profileEmail })
+      });
+      
+      if (!resProf) {
+        setUpdatingProfile(false);
+        return;
+      }
+      const dataProf = await resProf.json();
+      if (dataProf.status !== 'success') {
+        setError(dataProf.message || 'Profile update failed');
+        setUpdatingProfile(false);
+        return;
+      }
+
+      let finalUser = dataProf.data.user;
+
+      // 2. If mobile is changed, update mobile
+      if (profileMobile !== adminUser.mobile) {
+        const resMob = await customFetch('https://ludo-backend-production-72bc.up.railway.app/api/v1/users/mobile', {
+          method: 'PATCH',
+          headers: headers(),
+          body: JSON.stringify({ mobile: profileMobile })
+        });
+        if (resMob) {
+          const dataMob = await resMob.json();
+          if (dataMob.status === 'success') {
+            finalUser = dataMob.data.user;
+          } else {
+            setError(dataMob.message || 'Mobile update failed');
+            setUpdatingProfile(false);
+            return;
+          }
+        }
+      }
+
+      // 3. If avatar file is selected, upload it
+      if (profileAvatarFile) {
+        const formData = new FormData();
+        formData.append('avatar', profileAvatarFile);
+        
+        const resAv = await fetch('https://ludo-backend-production-72bc.up.railway.app/api/v1/users/avatar', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          body: formData
+        });
+        const dataAv = await resAv.json();
+        if (dataAv.status === 'success') {
+          finalUser = dataAv.data.user;
+          setProfileAvatarFile(null);
+        } else {
+          setError(dataAv.message || 'Avatar upload failed');
+          setUpdatingProfile(false);
+          return;
+        }
+      }
+
+      // Success! Update local states
+      setAdminUser(finalUser);
+      localStorage.setItem('adminUser', JSON.stringify(finalUser));
+      setProfileName(finalUser.name || '');
+      setProfileEmail(finalUser.email || '');
+      setProfileMobile(finalUser.mobile || '');
+      setProfileAvatarUrl(finalUser.avatar || '');
+      setMessage('Profile updated successfully!');
+    } catch (err: any) {
+      setError(err.message || 'An error occurred while updating profile');
+    } finally {
+      setUpdatingProfile(false);
+    }
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword !== confirmPassword) {
+      setError('New passwords do not match');
+      return;
+    }
+    setUpdatingPassword(true);
+    setMessage('');
+    setError('');
+    try {
+      const res = await customFetch('https://ludo-backend-production-72bc.up.railway.app/api/v1/auth/change-password', {
+        method: 'POST',
+        headers: headers(),
+        body: JSON.stringify({ oldPassword, newPassword, confirmPassword })
+      });
+      if (!res) {
+        setUpdatingPassword(false);
+        return;
+      }
+      const data = await res.json();
+      if (data.status === 'success') {
+        setMessage('Password updated successfully!');
+        setOldPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+      } else {
+        setError(data.message || 'Password change failed');
+      }
+    } catch (err: any) {
+      setError(err.message || 'An error occurred');
+    } finally {
+      setUpdatingPassword(false);
+    }
+  };
+
   // Client-side report export utilities (CSV generator)
   const exportToCSV = (jsonData: any[], filename: string) => {
     if (!jsonData || jsonData.length === 0) return;
@@ -690,7 +858,8 @@ export default function AdminPage() {
     deposits_withdrawals: 'Deposits & Payouts',
     referrals: 'Referrals & Broadcasts',
     reports_audit: 'Reports & Audits',
-    settings: 'System Settings'
+    settings: 'System Settings',
+    profile: 'My Profile'
   };
 
   if (!token) {
@@ -756,16 +925,18 @@ export default function AdminPage() {
         { id: 'deposits_withdrawals', label: 'Deposits & Payouts', icon: Database, badge: (deposits.filter(d=>d.status==='PENDING').length + withdrawals.filter(w=>w.status==='PENDING').length) },
         { id: 'referrals', label: 'Referrals & Broadcasts', icon: Bell },
         { id: 'reports_audit', label: 'Reports & Audits', icon: FileText },
-        { id: 'settings', label: 'System Settings', icon: Settings }
+        { id: 'settings', label: 'System Settings', icon: Settings },
+        { id: 'profile', label: 'My Profile', icon: User }
       ]}
       onLogout={handleLogout}
       socketConnected={socketConnected}
       onRefresh={fetchAllData}
       searchValue={globalSearch}
       onSearchChange={setGlobalSearch}
-      adminName="Super Admin"
-      adminRole="Platform Lead"
-      adminEmail="admin@battles.com"
+      notificationCount={reviews.length + deposits.filter(d=>d.status==='PENDING').length + withdrawals.filter(w=>w.status==='PENDING').length}
+      adminName={adminUser?.name || 'Super Admin'}
+      adminRole={adminUser?.role === 'ADMIN' ? 'Super Admin' : adminUser?.role || 'Platform Lead'}
+      adminEmail={adminUser?.email || 'admin@battles.com'}
     >
       {message && (
         <div className="bg-success/5 border border-success/20 text-success p-3 rounded-lg flex items-center gap-2 mb-6 text-xs font-semibold select-none">
@@ -1775,6 +1946,171 @@ export default function AdminPage() {
                 </div>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* TAB 12: MY PROFILE */}
+      {activeTab === 'profile' && (
+        <div className="flex flex-col gap-6">
+          <PageHeader
+            title="My Profile Settings"
+            subtitle="Manage your administrator account details, avatar, and password"
+          />
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left: Avatar & Info Summary */}
+            <div className="bg-cardBg border border-border p-6 rounded-xl flex flex-col items-center text-center shadow-xl h-fit">
+              <div className="relative group mb-4">
+                <Avatar
+                  src={profileAvatarUrl || '/default-avatar.png'}
+                  name={adminUser?.name || 'Admin'}
+                  className="w-28 h-28 border-4 border-accent/20 object-cover"
+                />
+                <label className="absolute bottom-0 right-0 p-2 bg-accent hover:bg-accent/80 text-primaryBg rounded-full cursor-pointer shadow-md transition-all">
+                  <Camera size={16} />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        setProfileAvatarFile(file);
+                        setProfileAvatarUrl(URL.createObjectURL(file));
+                      }
+                    }}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+              <h3 className="text-lg font-bold text-text">{adminUser?.name}</h3>
+              <span className="text-[10px] bg-accent/10 text-accent font-black tracking-widest uppercase px-3 py-1 rounded-full border border-accent/20 mt-1.5">
+                {adminUser?.role === 'ADMIN' ? 'Super Admin' : adminUser?.role || 'Platform Lead'}
+              </span>
+              
+              <div className="w-full border-t border-border/65 my-5" />
+
+              <div className="w-full flex flex-col gap-3 text-left text-xs">
+                <div className="flex flex-col">
+                  <span className="text-[10px] text-secondaryText uppercase tracking-wider font-bold">Email Address</span>
+                  <span className="text-text font-semibold break-all mt-0.5">{adminUser?.email}</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[10px] text-secondaryText uppercase tracking-wider font-bold">Mobile Number</span>
+                  <span className="text-text font-semibold mt-0.5">{adminUser?.mobile}</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[10px] text-secondaryText uppercase tracking-wider font-bold">Account Created</span>
+                  <span className="text-text font-semibold mt-0.5">{adminUser ? new Date(adminUser.createdAt).toLocaleString() : ''}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Right: Edit Forms */}
+            <div className="lg:col-span-2 flex flex-col gap-6">
+              {/* Card 1: Edit Details */}
+              <form onSubmit={handleUpdateProfile} className="bg-cardBg border border-border p-6 rounded-xl flex flex-col shadow-xl">
+                <h3 className="text-xs font-black text-accent uppercase tracking-wider mb-5 border-b border-border pb-2">Edit Profile Details</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+                  <Input
+                    label="Full Name"
+                    type="text"
+                    value={profileName}
+                    onChange={(e) => setProfileName(e.target.value)}
+                    required
+                  />
+                  <Input
+                    label="Email Address"
+                    type="email"
+                    value={profileEmail}
+                    onChange={(e) => setProfileEmail(e.target.value)}
+                    required
+                  />
+                  <Input
+                    label="Mobile Number (Phone)"
+                    type="text"
+                    value={profileMobile}
+                    onChange={(e) => setProfileMobile(e.target.value)}
+                    required
+                  />
+                  <div className="flex flex-col justify-end">
+                    <span className="text-[10px] text-secondaryText font-bold mb-1.5">Avatar (Profile Picture)</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-secondaryText truncate flex-1 bg-primaryBg border border-border px-3 py-2 rounded-lg font-semibold">
+                        {profileAvatarFile ? profileAvatarFile.name : 'No file selected'}
+                      </span>
+                      {profileAvatarFile && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setProfileAvatarFile(null);
+                            setProfileAvatarUrl(adminUser?.avatar || '');
+                          }}
+                          className="text-[10px] text-danger hover:underline font-bold uppercase tracking-wider px-2"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-3 border-t border-border pt-4">
+                  <Button
+                    type="submit"
+                    isLoading={updatingProfile}
+                    className="px-6 py-2 text-xs uppercase tracking-wider"
+                  >
+                    Save Profile Changes
+                  </Button>
+                </div>
+              </form>
+
+              {/* Card 2: Change Password */}
+              <form onSubmit={handleChangePassword} className="bg-cardBg border border-border p-6 rounded-xl flex flex-col shadow-xl">
+                <h3 className="text-xs font-black text-accent uppercase tracking-wider mb-5 border-b border-border pb-2">Security & Credentials</h3>
+                
+                <div className="flex flex-col gap-4 mb-5">
+                  <Input
+                    label="Current Password"
+                    type="password"
+                    value={oldPassword}
+                    onChange={(e) => setOldPassword(e.target.value)}
+                    required
+                    placeholder="Enter current password"
+                  />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Input
+                      label="New Password"
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      required
+                      placeholder="Enter new password"
+                    />
+                    <Input
+                      label="Confirm New Password"
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required
+                      placeholder="Confirm new password"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-3 border-t border-border pt-4">
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    isLoading={updatingPassword}
+                    className="px-6 py-2 text-xs uppercase tracking-wider"
+                  >
+                    Update Password
+                  </Button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}
