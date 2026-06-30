@@ -124,7 +124,7 @@ export default function AdminPage() {
       fetchAllData();
 
       // Setup Socket.IO connection
-      const socket = io('http://localhost:5000', {
+      const socket = io('https://ludo-backend-production-72bc.up.railway.app', {
         auth: { token }
       });
 
@@ -208,7 +208,7 @@ export default function AdminPage() {
 
   const fetchOverviewStats = async () => {
     try {
-      const res = await customFetch('http://localhost:5000/api/v1/admin/dashboard-stats', { headers: headers() });
+      const res = await customFetch('https://ludo-backend-production-72bc.up.railway.app/api/v1/admin/dashboard-stats', { headers: headers() });
       if (!res) return;
       const data = await res.json();
       if (data.status === 'success') setStats(data.data);
@@ -217,7 +217,7 @@ export default function AdminPage() {
 
   const fetchFinancialStats = async () => {
     try {
-      const res = await customFetch('http://localhost:5000/api/v1/admin/stats-financial', { headers: headers() });
+      const res = await customFetch('https://ludo-backend-production-72bc.up.railway.app/api/v1/admin/stats-financial', { headers: headers() });
       if (!res) return;
       const data = await res.json();
       if (data.status === 'success') setFinancialStats(data.data);
@@ -226,7 +226,7 @@ export default function AdminPage() {
 
   const fetchUsers = async () => {
     try {
-      const res = await customFetch('http://localhost:5000/api/v1/admin/users-detailed', { headers: headers() });
+      const res = await customFetch('https://ludo-backend-production-72bc.up.railway.app/api/v1/admin/users-detailed', { headers: headers() });
       if (!res) return;
       const data = await res.json();
       if (data.status === 'success') setUsers(data.data.users);
@@ -235,7 +235,7 @@ export default function AdminPage() {
 
   const fetchBattles = async () => {
     try {
-      const res = await customFetch('http://localhost:5000/api/v1/admin/battles', { headers: headers() });
+      const res = await customFetch('https://ludo-backend-production-72bc.up.railway.app/api/v1/admin/battles', { headers: headers() });
       if (!res) return;
       const data = await res.json();
       if (data.status === 'success') setBattles(data.data.battles);
@@ -244,7 +244,7 @@ export default function AdminPage() {
 
   const fetchPendingReviews = async () => {
     try {
-      const res = await customFetch('http://localhost:5000/api/v1/admin/pending-ai-reviews', { headers: headers() });
+      const res = await customFetch('https://ludo-backend-production-72bc.up.railway.app/api/v1/admin/pending-ai-reviews', { headers: headers() });
       if (!res) return;
       const data = await res.json();
       if (data.status === 'success') setReviews(data.data.reviews);
@@ -253,7 +253,7 @@ export default function AdminPage() {
 
   const fetchScreenshots = async () => {
     try {
-      const res = await customFetch('http://localhost:5000/api/v1/admin/screenshots', { headers: headers() });
+      const res = await customFetch('https://ludo-backend-production-72bc.up.railway.app/api/v1/admin/screenshots', { headers: headers() });
       if (!res) return;
       const data = await res.json();
       if (data.status === 'success') setScreenshots(data.data.screenshots);
@@ -262,7 +262,7 @@ export default function AdminPage() {
 
   const fetchTransactions = async () => {
     try {
-      const res = await customFetch('http://localhost:5000/api/v1/admin/transactions', { headers: headers() });
+      const res = await customFetch('https://ludo-backend-production-72bc.up.railway.app/api/v1/admin/transactions', { headers: headers() });
       if (!res) return;
       const data = await res.json();
       if (data.status === 'success') setTransactions(data.data.transactions);
@@ -271,13 +271,13 @@ export default function AdminPage() {
 
   const fetchDepositsAndWithdrawals = async () => {
     try {
-      const resDep = await customFetch('http://localhost:5000/api/v1/admin/deposits', { headers: headers() });
+      const resDep = await customFetch('https://ludo-backend-production-72bc.up.railway.app/api/v1/admin/deposits', { headers: headers() });
       if (resDep) {
         const dataDep = await resDep.json();
         if (dataDep.status === 'success') setDeposits(dataDep.data.deposits);
       }
 
-      const resWit = await customFetch('http://localhost:5000/api/v1/admin/withdrawals', { headers: headers() });
+      const resWit = await customFetch('https://ludo-backend-production-72bc.up.railway.app/api/v1/admin/withdrawals', { headers: headers() });
       if (resWit) {
         const dataWit = await resWit.json();
         if (dataWit.status === 'success') setWithdrawals(dataWit.data.withdrawals);
@@ -287,19 +287,19 @@ export default function AdminPage() {
 
   const fetchReferralData = async () => {
     try {
-      const resAna = await customFetch('http://localhost:5000/api/v1/admin/referral-analytics', { headers: headers() });
+      const resAna = await customFetch('https://ludo-backend-production-72bc.up.railway.app/api/v1/admin/referral-analytics', { headers: headers() });
       if (resAna) {
         const dataAna = await resAna.json();
         if (dataAna.status === 'success') setReferralAnalytics(dataAna.data.analytics);
       }
 
-      const resTop = await customFetch('http://localhost:5000/api/v1/admin/referral-top', { headers: headers() });
+      const resTop = await customFetch('https://ludo-backend-production-72bc.up.railway.app/api/v1/admin/referral-top', { headers: headers() });
       if (resTop) {
         const dataTop = await resTop.json();
         if (dataTop.status === 'success') setTopReferrers(dataTop.data.topReferrers);
       }
 
-      const resEar = await customFetch('http://localhost:5000/api/v1/admin/referral-earnings', { headers: headers() });
+      const resEar = await customFetch('https://ludo-backend-production-72bc.up.railway.app/api/v1/admin/referral-earnings', { headers: headers() });
       if (resEar) {
         const dataEar = await resEar.json();
         if (dataEar.status === 'success') setReferralEarnings(dataEar.data.earningsList);
@@ -309,7 +309,7 @@ export default function AdminPage() {
 
   const fetchAuditLogs = async () => {
     try {
-      const res = await customFetch('http://localhost:5000/api/v1/admin/audit-logs', { headers: headers() });
+      const res = await customFetch('https://ludo-backend-production-72bc.up.railway.app/api/v1/admin/audit-logs', { headers: headers() });
       if (!res) return;
       const data = await res.json();
       if (data.status === 'success') setAuditLogs(data.data.auditLogs);
@@ -318,7 +318,7 @@ export default function AdminPage() {
 
   const fetchSettings = async () => {
     try {
-      const res = await customFetch('http://localhost:5000/api/v1/admin/system-settings', { headers: headers() });
+      const res = await customFetch('https://ludo-backend-production-72bc.up.railway.app/api/v1/admin/system-settings', { headers: headers() });
       if (!res) return;
       const data = await res.json();
       if (data.status === 'success') {
@@ -334,7 +334,7 @@ export default function AdminPage() {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch('http://localhost:5000/api/v1/auth/login', {
+      const res = await fetch('https://ludo-backend-production-72bc.up.railway.app/api/v1/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -362,7 +362,7 @@ export default function AdminPage() {
   const handleUserStatusToggle = async (userId: string, currentStatus: string) => {
     const status = currentStatus === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE';
     try {
-      const res = await customFetch(`http://localhost:5000/api/v1/admin/users/${userId}/status`, {
+      const res = await customFetch(`https://ludo-backend-production-72bc.up.railway.app/api/v1/admin/users/${userId}/status`, {
         method: 'PATCH',
         headers: headers(),
         body: JSON.stringify({ status })
@@ -382,7 +382,7 @@ export default function AdminPage() {
     if (!adjustingUser) return;
     try {
       const amt = parseFloat(adjustAmount) * (adjustType === 'credit' ? 1 : -1);
-      const res = await customFetch('http://localhost:5000/api/v1/admin/wallet/adjust', {
+      const res = await customFetch('https://ludo-backend-production-72bc.up.railway.app/api/v1/admin/wallet/adjust', {
         method: 'POST',
         headers: headers(),
         body: JSON.stringify({
@@ -409,7 +409,7 @@ export default function AdminPage() {
 
   const handleApproveWithdrawal = async (withdrawalId: string) => {
     try {
-      const res = await customFetch(`http://localhost:5000/api/v1/admin/withdrawals/${withdrawalId}/approve`, {
+      const res = await customFetch(`https://ludo-backend-production-72bc.up.railway.app/api/v1/admin/withdrawals/${withdrawalId}/approve`, {
         method: 'POST',
         headers: headers()
       });
@@ -428,7 +428,7 @@ export default function AdminPage() {
     e.preventDefault();
     if (!rejectWithdrawalId) return;
     try {
-      const res = await customFetch(`http://localhost:5000/api/v1/admin/withdrawals/${rejectWithdrawalId}/reject`, {
+      const res = await customFetch(`https://ludo-backend-production-72bc.up.railway.app/api/v1/admin/withdrawals/${rejectWithdrawalId}/reject`, {
         method: 'POST',
         headers: headers(),
         body: JSON.stringify({ reason: rejectReason })
@@ -448,7 +448,7 @@ export default function AdminPage() {
 
   const handleApproveDeposit = async (depositId: string) => {
     try {
-      const res = await customFetch(`http://localhost:5000/api/v1/admin/deposits/${depositId}/approve`, {
+      const res = await customFetch(`https://ludo-backend-production-72bc.up.railway.app/api/v1/admin/deposits/${depositId}/approve`, {
         method: 'POST',
         headers: headers()
       });
@@ -467,7 +467,7 @@ export default function AdminPage() {
     const reason = prompt('Enter rejection reason:');
     if (!reason) return;
     try {
-      const res = await customFetch(`http://localhost:5000/api/v1/admin/deposits/${depositId}/reject`, {
+      const res = await customFetch(`https://ludo-backend-production-72bc.up.railway.app/api/v1/admin/deposits/${depositId}/reject`, {
         method: 'POST',
         headers: headers(),
         body: JSON.stringify({ reason })
@@ -485,7 +485,7 @@ export default function AdminPage() {
 
   const handleResolveAIReview = async (battleId: string, decision: string, winnerId?: string) => {
     try {
-      const res = await customFetch('http://localhost:5000/api/v1/admin/resolve-ai-review', {
+      const res = await customFetch('https://ludo-backend-production-72bc.up.railway.app/api/v1/admin/resolve-ai-review', {
         method: 'POST',
         headers: headers(),
         body: JSON.stringify({
@@ -513,7 +513,7 @@ export default function AdminPage() {
     e.preventDefault();
     if (!disputeBattle) return;
     try {
-      const res = await customFetch(`http://localhost:5000/api/v1/admin/battles/${disputeBattle.id}/resolve-dispute`, {
+      const res = await customFetch(`https://ludo-backend-production-72bc.up.railway.app/api/v1/admin/battles/${disputeBattle.id}/resolve-dispute`, {
         method: 'POST',
         headers: headers(),
         body: JSON.stringify({ decision: disputeDecision })
@@ -534,7 +534,7 @@ export default function AdminPage() {
     e.preventDefault();
     try {
       const userIds = notifTarget === 'all' ? 'all' : [notifTargetId];
-      const res = await customFetch('http://localhost:5000/api/v1/admin/send-notification', {
+      const res = await customFetch('https://ludo-backend-production-72bc.up.railway.app/api/v1/admin/send-notification', {
         method: 'POST',
         headers: headers(),
         body: JSON.stringify({
@@ -564,7 +564,7 @@ export default function AdminPage() {
         payload[s.key] = s.value;
       });
 
-      const res = await customFetch('http://localhost:5000/api/v1/admin/system-settings', {
+      const res = await customFetch('https://ludo-backend-production-72bc.up.railway.app/api/v1/admin/system-settings', {
         method: 'PUT',
         headers: headers(),
         body: JSON.stringify(payload)
@@ -586,7 +586,7 @@ export default function AdminPage() {
     setMessage('');
     setError('');
     try {
-      const res = await customFetch('http://localhost:5000/api/v1/admin/system-settings', {
+      const res = await customFetch('https://ludo-backend-production-72bc.up.railway.app/api/v1/admin/system-settings', {
         method: 'PUT',
         headers: headers(),
         body: JSON.stringify({ [key]: value })
