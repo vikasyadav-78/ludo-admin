@@ -80,7 +80,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           onSearchChange={onSearchChange}
         />
 
-        <main className="flex-1 overflow-y-auto px-6 py-6">
+        <main className="flex-1 overflow-y-auto px-6 pt-6 pb-24">
           {children}
         </main>
       </div>

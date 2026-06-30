@@ -1704,18 +1704,18 @@ export default function AdminPage() {
               return (
                 <div key={s.key} className="bg-cardBg border border-border p-5 rounded-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-md transition-all hover:border-border/80">
                   {/* Label & Description */}
-                  <div className="flex flex-col gap-1 max-w-full md:max-w-[60%]">
+                  <div className="flex flex-col gap-1 w-full md:max-w-[60%]">
                     <span className="text-sm font-bold text-text">{s.label || s.key}</span>
                     <span className="text-[11px] text-secondaryText leading-relaxed">{s.description}</span>
                   </div>
 
                   {/* Control input & Save/Reset buttons */}
-                  <div className="flex items-center gap-3 w-full md:w-auto justify-end">
+                  <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-start md:justify-end">
                     {s.type === 'BOOLEAN' ? (
                       <select
                         value={s.value}
                         onChange={(e) => handleSettingChange(s.key, e.target.value)}
-                        className="px-3 py-2 bg-primaryBg border border-border rounded-lg text-text text-xs font-bold outline-none focus:ring-1 focus:ring-accent focus:border-accent w-[130px] cursor-pointer"
+                        className="px-3 py-2 bg-primaryBg border border-border rounded-lg text-text text-xs font-bold outline-none focus:ring-1 focus:ring-accent focus:border-accent w-full md:w-[130px] cursor-pointer"
                       >
                         <option value="true">ENABLED</option>
                         <option value="false">DISABLED</option>
@@ -1724,7 +1724,7 @@ export default function AdminPage() {
                       <select
                         value={s.value}
                         onChange={(e) => handleSettingChange(s.key, e.target.value)}
-                        className="px-3 py-2 bg-primaryBg border border-border rounded-lg text-text text-xs font-bold outline-none focus:ring-1 focus:ring-accent focus:border-accent w-[200px] cursor-pointer"
+                        className="px-3 py-2 bg-primaryBg border border-border rounded-lg text-text text-xs font-bold outline-none focus:ring-1 focus:ring-accent focus:border-accent w-full md:w-[200px] cursor-pointer"
                       >
                         <option value="MIN_8_CHARS">Min 8 Chars</option>
                         <option value="MIN_8_CHARS_1_NUM">Min 8 Chars + 1 Number</option>
@@ -1732,13 +1732,13 @@ export default function AdminPage() {
                         <option value="MIN_8_CHARS_SPECIAL">Min 8 Chars + Special Character</option>
                       </select>
                     ) : (
-                      <div className="relative">
+                      <div className="relative w-full md:w-auto">
                         <input
                           type={s.type === 'NUMBER' || s.type === 'PERCENTAGE' ? 'number' : 'text'}
                           step="any"
                           value={s.value}
                           onChange={(e) => handleSettingChange(s.key, e.target.value)}
-                          className="px-3 py-2 pl-6 bg-primaryBg border border-border rounded-lg text-text text-xs font-bold outline-none focus:ring-1 focus:ring-accent focus:border-accent w-[160px]"
+                          className="px-3 py-2 pl-6 bg-primaryBg border border-border rounded-lg text-text text-xs font-bold outline-none focus:ring-1 focus:ring-accent focus:border-accent w-full md:w-[160px]"
                         />
                         {(s.type === 'PERCENTAGE' || s.key.includes('PERCENT')) && (
                           <span className="absolute right-2.5 top-2.5 text-[10px] text-secondaryText font-bold select-none">%</span>
@@ -1749,12 +1749,12 @@ export default function AdminPage() {
                       </div>
                     )}
 
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 w-full md:w-auto justify-end">
                       <Button
                         variant="primary"
                         onClick={() => handleSaveSingleSetting(s.key, s.value)}
                         disabled={!isChanged}
-                        className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-wider ${
+                        className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-wider flex-1 md:flex-initial ${
                           !isChanged ? 'opacity-30 cursor-not-allowed bg-border text-secondaryText' : 'cursor-pointer'
                         }`}
                       >
@@ -1764,7 +1764,7 @@ export default function AdminPage() {
                         variant="outline"
                         onClick={() => handleResetSingleSetting(s.key)}
                         disabled={!isChanged}
-                        className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-wider border-border ${
+                        className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-wider border-border flex-1 md:flex-initial ${
                           !isChanged ? 'opacity-30 cursor-not-allowed text-secondaryText' : 'cursor-pointer'
                         }`}
                       >
