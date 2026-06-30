@@ -808,7 +808,11 @@ export default function AdminPage() {
   // Global Filter matching
   const matchesGlobal = (fields: string[]) => {
     if (!globalSearch) return true;
-    return fields.some(f => f?.toLowerCase().includes(globalSearch.toLowerCase()));
+    const search = globalSearch.toLowerCase();
+    return fields.some(f => {
+      if (f === null || f === undefined) return false;
+      return String(f).toLowerCase().includes(search);
+    });
   };
 
   // Filter lists based on searches
