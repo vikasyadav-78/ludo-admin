@@ -18,12 +18,14 @@ interface DashboardLayoutProps {
   adminName?: string;
   adminEmail?: string;
   adminRole?: string;
+  adminAvatar?: string;
   onLogout: () => void;
   socketConnected: boolean;
   onRefresh: () => void;
   searchValue: string;
   onSearchChange: (val: string) => void;
   notificationCount?: number;
+  onOpenNotifications?: () => void;
   children: React.ReactNode;
 }
 
@@ -35,12 +37,14 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   adminName,
   adminEmail,
   adminRole,
+  adminAvatar,
   onLogout,
   socketConnected,
   onRefresh,
   searchValue,
   onSearchChange,
   notificationCount = 0,
+  onOpenNotifications,
   children,
 }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -65,6 +69,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         items={sidebarItems}
         adminName={adminName}
         adminRole={adminRole}
+        adminAvatar={adminAvatar}
         onLogout={onLogout}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
@@ -78,10 +83,12 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           onOpenSidebar={() => setSidebarOpen(true)}
           adminName={adminName}
           adminEmail={adminEmail}
+          adminAvatar={adminAvatar}
           searchValue={searchValue}
           onSearchChange={onSearchChange}
           notificationCount={notificationCount}
           onTabChange={onTabChange}
+          onOpenNotifications={onOpenNotifications}
         />
 
         <main className="flex-1 overflow-y-auto px-6 pt-6 pb-24">

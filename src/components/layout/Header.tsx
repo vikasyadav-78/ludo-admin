@@ -11,10 +11,12 @@ interface HeaderProps {
   onOpenSidebar: () => void;
   adminName?: string;
   adminEmail?: string;
+  adminAvatar?: string;
   searchValue: string;
   onSearchChange: (val: string) => void;
   notificationCount?: number;
   onTabChange: (tabId: string) => void;
+  onOpenNotifications?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -24,10 +26,12 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenSidebar,
   adminName = 'Administrator',
   adminEmail = 'admin@platform.com',
+  adminAvatar,
   searchValue,
   onSearchChange,
   notificationCount = 0,
   onTabChange,
+  onOpenNotifications,
 }) => {
   return (
     <header className="sticky top-0 z-30 h-16 w-full bg-cardBg/75 border-b border-border backdrop-blur-md px-4 sm:px-6 flex items-center justify-between shrink-0 select-none">
@@ -62,13 +66,7 @@ export const Header: React.FC<HeaderProps> = ({
         </button>
 
         <button
-          onClick={() => {
-            if (notificationCount > 0) {
-              onTabChange('ai_reviews');
-            } else {
-              onTabChange('profile');
-            }
-          }}
+          onClick={onOpenNotifications}
           className="relative text-secondaryText hover:text-text p-2 rounded-lg hover:bg-secondaryBg/80 transition-all cursor-pointer border-none bg-transparent"
           title="Pending Actions"
         >
@@ -94,7 +92,7 @@ export const Header: React.FC<HeaderProps> = ({
         <Dropdown
           trigger={
             <div className="flex items-center gap-2 group cursor-pointer">
-              <Avatar name={adminName} size="sm" className="ring-1 ring-border group-hover:ring-accent transition-all" />
+              <Avatar name={adminName} src={adminAvatar} size="sm" className="ring-1 ring-border group-hover:ring-accent transition-all" />
               <div className="hidden lg:flex flex-col text-left">
                 <span className="text-xs font-bold text-text group-hover:text-accent transition-all">{adminName}</span>
                 <span className="text-[9px] text-secondaryText truncate max-w-[100px]">{adminEmail}</span>

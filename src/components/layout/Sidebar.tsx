@@ -17,6 +17,7 @@ interface SidebarProps {
   items: SidebarItem[];
   adminName?: string;
   adminRole?: string;
+  adminAvatar?: string;
   onLogout: () => void;
   isOpen: boolean;
   onClose: () => void;
@@ -28,6 +29,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   items,
   adminName = 'Administrator',
   adminRole = 'Root Admin',
+  adminAvatar,
   onLogout,
   isOpen,
   onClose,
@@ -88,7 +90,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Admin Profile Section fixed at bottom */}
       <div className="p-4 border-t border-border flex items-center justify-between shrink-0 bg-cardBg/90">
         <div className="flex items-center gap-3">
-          <Avatar name={adminName} size="sm" />
+          <Avatar name={adminName} src={adminAvatar} size="sm" />
           <div className="flex flex-col select-none">
             <span className="text-xs font-bold text-text truncate max-w-[140px]">{adminName}</span>
             <span className="text-[10px] text-secondaryText">{adminRole}</span>

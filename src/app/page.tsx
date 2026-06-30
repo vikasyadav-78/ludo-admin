@@ -121,6 +121,7 @@ export default function AdminPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [updatingProfile, setUpdatingProfile] = useState(false);
   const [updatingPassword, setUpdatingPassword] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 
   // Auto-fill token and adminUser from localStorage
   useEffect(() => {
@@ -228,6 +229,7 @@ export default function AdminPage() {
 
   const handleLogout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
     localStorage.removeItem('adminUser');
     setToken(null);
     setAdminUser(null);
@@ -237,8 +239,52 @@ export default function AdminPage() {
 
   const customFetch = async (url: string, init?: RequestInit) => {
     try {
-      const res = await fetch(url, init);
+      let currentToken = token;
+      if (!currentToken && typeof window !== 'undefined') {
+        currentToken = localStorage.getItem('token');
+      }
+
+      const res = await fetch(url, {
+        ...init,
+        headers: {
+          ...init?.headers,
+          'Authorization': `Bearer ${currentToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
       if (res.status === 401) {
+        if (typeof window !== 'undefined') {
+          const rToken = localStorage.getItem('refreshToken');
+          if (rToken) {
+            const refreshRes = await fetch('https://ludo-backend-production-72bc.up.railway.app/api/v1/auth/refresh-token', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ refreshToken: rToken })
+            });
+            
+            if (refreshRes.ok) {
+              const refreshData = await refreshRes.json();
+              if (refreshData.status === 'success') {
+                const newToken = refreshData.data.token;
+                localStorage.setItem('token', newToken);
+                setToken(newToken);
+
+                // Retry the request with the new token
+                const retryRes = await fetch(url, {
+                  ...init,
+                  headers: {
+                    ...init?.headers,
+                    'Authorization': `Bearer ${newToken}`,
+                    'Content-Type': 'application/json'
+                  }
+                });
+                return retryRes;
+              }
+            }
+          }
+        }
+
         handleLogout();
         setError('Session expired. Please log in again.');
         return null;
@@ -391,6 +437,7 @@ export default function AdminPage() {
           return;
         }
         localStorage.setItem('token', data.data.token);
+        localStorage.setItem('refreshToken', data.data.refreshToken);
         localStorage.setItem('adminUser', JSON.stringify(data.data.user));
         setToken(data.data.token);
         setAdminUser(data.data.user);
@@ -632,6 +679,32 @@ export default function AdminPage() {
     } catch (e) { console.error(e); }
   };
 
+  const getFriendlySettingName = (key: string): string => {
+    const mapping: Record<string, string> = {
+      APP_NAME: 'Application Name',
+      APP_LOGO: 'Application Logo',
+      MAINTENANCE_MODE: 'Maintenance Mode',
+      REGISTRATION_ENABLED: 'User Registration',
+      LOGIN_ENABLED: 'User Login',
+      REFERRAL_SYSTEM_ENABLED: 'Referral System',
+      WELCOME_BONUS: 'Welcome Bonus',
+      MIN_DEPOSIT: 'Minimum Deposit Limit',
+      MAX_DEPOSIT: 'Maximum Deposit Limit',
+      MIN_WITHDRAWAL: 'Minimum Withdrawal Limit',
+      MAX_WITHDRAWAL: 'Maximum Withdrawal Limit',
+      WITHDRAWAL_CHARGES: 'Withdrawal Charges',
+      REFERRAL_FIRST_DEPOSIT_REWARD: 'Referral Reward Amount',
+      PUSH_NOTIFICATIONS_ENABLED: 'Push Notifications',
+      EMAIL_NOTIFICATIONS_ENABLED: 'Email Notifications',
+      SMS_NOTIFICATIONS_ENABLED: 'SMS Notifications',
+      OTP_EXPIRY_MINS: 'OTP Expiry Duration',
+      OTP_RETRY_LIMIT: 'OTP Retry Limit',
+      LOGIN_RETRY_LIMIT: 'Login Retry Limit',
+      PASSWORD_POLICY: 'Password Security Policy'
+    };
+    return mapping[key] || key;
+  };
+
   const handleSaveSingleSetting = async (key: string, value: string) => {
     setMessage('');
     setError('');
@@ -644,7 +717,23 @@ export default function AdminPage() {
       if (!res) return;
       const data = await res.json();
       if (data.status === 'success') {
-        setMessage(`Setting '${key}' updated successfully`);
+        const friendlyName = getFriendlySettingName(key);
+        const origValue = originalSettings.find(o => o.key === key)?.value || 'N/A';
+        
+        const formatVal = (v: string) => {
+          if (v === 'N/A') return 'N/A';
+          if (key.includes('AMOUNT') || key.includes('DEPOSIT') || key.includes('WITHDRAWAL') || key.includes('REWARD') || key.includes('BONUS')) {
+            return `₹${v}`;
+          }
+          if (key.includes('PERCENT') || key === 'WITHDRAWAL_CHARGES') {
+            return `${v}%`;
+          }
+          if (v === 'true') return 'Enabled';
+          if (v === 'false') return 'Disabled';
+          return v;
+        };
+
+        setMessage(`${friendlyName} updated successfully. Previous Value: ${formatVal(origValue)} | New Value: ${formatVal(value)}`);
         setSettings(data.data.settings);
         setOriginalSettings(JSON.parse(JSON.stringify(data.data.settings)));
         fetchAuditLogs();
@@ -938,9 +1027,11 @@ export default function AdminPage() {
       searchValue={globalSearch}
       onSearchChange={setGlobalSearch}
       notificationCount={reviews.length + deposits.filter(d=>d.status==='PENDING').length + withdrawals.filter(w=>w.status==='PENDING').length}
+      onOpenNotifications={() => setIsNotificationsOpen(true)}
       adminName={adminUser?.name || 'Super Admin'}
       adminRole={adminUser?.role === 'ADMIN' ? 'Super Admin' : adminUser?.role || 'Platform Lead'}
       adminEmail={adminUser?.email || 'admin@battles.com'}
+      adminAvatar={adminUser?.avatar || ''}
     >
       {message && (
         <div className="bg-success/5 border border-success/20 text-success p-3 rounded-lg flex items-center gap-2 mb-6 text-xs font-semibold select-none">
@@ -2317,6 +2408,83 @@ export default function AdminPage() {
           </form>
         )}
       </Modal>
+
+      {/* MODAL 6: Pending Notifications Drawer */}
+      <Drawer
+        isOpen={isNotificationsOpen}
+        onClose={() => setIsNotificationsOpen(false)}
+        title="Pending Action Items"
+      >
+        <div className="flex flex-col gap-4">
+          {reviews.length === 0 && deposits.filter(d=>d.status==='PENDING').length === 0 && withdrawals.filter(w=>w.status==='PENDING').length === 0 ? (
+            <div className="text-center py-12 text-secondaryText text-xs font-semibold">
+              🎉 No pending tasks! All caught up.
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3.5">
+              {/* Pending AI Reviews */}
+              {reviews.map(rev => (
+                <div key={rev.id} className="p-4 bg-primaryBg border border-border rounded-xl flex items-center justify-between gap-3 shadow-md">
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-xs font-bold text-text">Dispute Battle #{rev.battleId.slice(0,8)}</span>
+                    <span className="text-[10px] text-secondaryText">Status: Pending AI Review</span>
+                  </div>
+                  <Button
+                    variant="secondary"
+                    className="px-3 py-1.5 text-[10px] uppercase font-black tracking-wider"
+                    onClick={() => {
+                      setActiveTab('ai_reviews');
+                      setIsNotificationsOpen(false);
+                    }}
+                  >
+                    Resolve
+                  </Button>
+                </div>
+              ))}
+
+              {/* Pending Deposits */}
+              {deposits.filter(d => d.status === 'PENDING').map(dep => (
+                <div key={dep.id} className="p-4 bg-primaryBg border border-border rounded-xl flex items-center justify-between gap-3 shadow-md">
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-xs font-bold text-text">Deposit Request: ₹{dep.amount}</span>
+                    <span className="text-[10px] text-secondaryText">User: {dep.user?.name || dep.userId.slice(0,8)}</span>
+                  </div>
+                  <Button
+                    variant="secondary"
+                    className="px-3 py-1.5 text-[10px] uppercase font-black tracking-wider"
+                    onClick={() => {
+                      setActiveTab('deposits_withdrawals');
+                      setIsNotificationsOpen(false);
+                    }}
+                  >
+                    Review
+                  </Button>
+                </div>
+              ))}
+
+              {/* Pending Withdrawals */}
+              {withdrawals.filter(w => w.status === 'PENDING').map(wit => (
+                <div key={wit.id} className="p-4 bg-primaryBg border border-border rounded-xl flex items-center justify-between gap-3 shadow-md">
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-xs font-bold text-text">Withdrawal Request: ₹{wit.amount}</span>
+                    <span className="text-[10px] text-secondaryText">User: {wit.user?.name || wit.userId.slice(0,8)}</span>
+                  </div>
+                  <Button
+                    variant="secondary"
+                    className="px-3 py-1.5 text-[10px] uppercase font-black tracking-wider"
+                    onClick={() => {
+                      setActiveTab('deposits_withdrawals');
+                      setIsNotificationsOpen(false);
+                    }}
+                  >
+                    Process
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </Drawer>
     </DashboardLayout>
   );
 }
